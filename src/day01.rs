@@ -3,7 +3,7 @@ use std::str;
 type Input<'a> = Vec<&'a str>;
 
 pub fn generator(input: &str) -> Input {
-    input.split('\n').collect()
+    input.lines().collect()
 }
 
 pub fn part1(input: &Input) -> u32 {

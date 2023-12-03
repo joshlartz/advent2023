@@ -62,11 +62,14 @@ pub fn part1(input: &Input) -> u32 {
 }
 
 pub fn part2(input: &Input) -> usize {
-    input.iter().map(|game| {
-        game.red.iter().max().unwrap_or(&0)
-            * game.green.iter().max().unwrap_or(&0)
-            * game.blue.iter().max().unwrap_or(&0)
-    }).sum()
+    input
+        .iter()
+        .map(|game| {
+            game.red.iter().max().unwrap_or(&0)
+                * game.green.iter().max().unwrap_or(&0)
+                * game.blue.iter().max().unwrap_or(&0)
+        })
+        .sum()
 }
 
 #[cfg(test)]

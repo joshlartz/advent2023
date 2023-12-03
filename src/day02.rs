@@ -61,15 +61,13 @@ pub fn part1(input: &Input) -> u32 {
         .fold(0, |acc, game| acc + game.id)
 }
 
-// pub fn part2(input: &Input) -> u32 {
-//     input
-//         .iter()
-//         .map(|line| {
-//             let numbers = find_numbers(line);
-//             combine_numbers(numbers)
-//         })
-//         .sum()
-// }
+pub fn part2(input: &Input) -> usize {
+    input.iter().map(|game| {
+        game.red.iter().max().unwrap_or(&0)
+            * game.green.iter().max().unwrap_or(&0)
+            * game.blue.iter().max().unwrap_or(&0)
+    }).sum()
+}
 
 #[cfg(test)]
 mod tests {
@@ -86,8 +84,8 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green";
         assert_eq!(part1(&generator(SAMPLE)), 8);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     assert_eq!(part2(&generator(SAMPLE_2)), 281);
-    // }
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(&generator(SAMPLE)), 2286);
+    }
 }

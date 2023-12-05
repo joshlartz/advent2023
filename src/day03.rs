@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use regex::Regex;
-use std::ops::RangeInclusive;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 type Input<'a> = (Vec<&'a str>, Vec<Part>);
 
@@ -85,7 +85,9 @@ pub fn part1(input: &Input) -> usize {
                 // check for row out of bounds
                 if let Some(row) = rows.get(adj.row) {
                     // check for column out of bounds
-                    if adj.range.start() > &col_max { return false };
+                    if adj.range.start() > &col_max {
+                        return false;
+                    };
                     let range = if adj.range.end() > &col_max {
                         *adj.range.start()..=(adj.range.end() - 1)
                     } else {
@@ -104,9 +106,93 @@ pub fn part1(input: &Input) -> usize {
         .sum()
 }
 
-// pub fn part2(input: &Input) -> usize {
+#[derive(Debug)]
+struct Gear {
+    row: usize,
+    col: usize,
+}
 
-// }
+impl Gear {
+    fn adjacencies(&self) -> Vec<Adjacency> {
+        // right side
+        let mut adjacencies = vec![Adjacency {
+            row: self.row,
+            range: self.col + 1..=self.col + 1,
+        }];
+        // left side
+        adjacencies.push(Adjacency {
+            row: self.row,
+            range: self.col - 1..=self.col - 1,
+        });
+
+        // above row
+        adjacencies.push(Adjacency {
+            row: self.row - 1,
+            range: self.col - 1..=self.col + 1,
+        });
+
+        // below row
+        adjacencies.push(Adjacency {
+            row: self.row + 1,
+            range: self.col - 1..=self.col + 1,
+        });
+
+        adjacencies
+    }
+}
+
+pub fn part2(input: &Input) -> usize {
+    let (rows, parts) = input;
+
+    let grouped_parts = parts.iter().fold(HashMap::new(), |mut map, part| {
+        map.entry(part.row).or_insert_with(|| Vec::new()).push(part);
+        map
+    });
+
+    let re = Regex::new(r"\*").unwrap();
+    let gears = rows
+        .iter()
+        .enumerate()
+        .flat_map(|(index, row)| {
+            re.find_iter(row).map(move |m| Gear {
+                row: index,
+                col: m.start(),
+            })
+        })
+        .collect_vec();
+    // println!("{:?}", gears[0].adjacencies());
+
+    gears
+        .iter()
+        .map(|gear| {
+            gear.adjacencies()
+                .iter()
+                .filter_map(|adj| {
+                    if let Some(row) = &grouped_parts.get(&adj.row) {
+                        Some(
+                            row.iter()
+                                .filter(|part| {
+                                    (adj.range.start() <= &part.end)
+                                        && &part.start <= adj.range.end()
+                                })
+                                .collect_vec(),
+                        )
+                    } else {
+                        None
+                    }
+                })
+                .flatten()
+                .collect_vec()
+        })
+        .filter_map(|part| {
+            if part.len() == 2 {
+                Some(part[0].number * part[1].number)
+            } else {
+                None
+            }
+        })
+        .sum()
+}
 
 #[cfg(test)]
 mod tests {
@@ -128,8 +214,8 @@ mod tests {
         assert_eq!(part1(&generator(SAMPLE)), 4361);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     assert_eq!(part2(&generator(SAMPLE)), 2286);
-    // }
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(&generator(SAMPLE)), 467835);
+    }
 }

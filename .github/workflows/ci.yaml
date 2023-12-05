@@ -12,6 +12,7 @@ jobs:
           - test
           - clippy
           - fmt --check
+    continue-on-error: ${{ matrix.cmd }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

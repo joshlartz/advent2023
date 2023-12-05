@@ -12,7 +12,7 @@ jobs:
       matrix:
         cmd:
           - test
-          - clippy
+          - clippy -- -D warnings
           - fmt --check
     steps:
       - name: Checkout

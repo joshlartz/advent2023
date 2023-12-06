@@ -160,7 +160,6 @@ pub fn part2(input: &Input) -> usize {
             })
         })
         .collect_vec();
-    // println!("{:?}", gears[0].adjacencies());
 
     gears
         .iter()

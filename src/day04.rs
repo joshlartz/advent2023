@@ -1,24 +1,26 @@
-use std::collections::HashSet;
-
 use itertools::Itertools;
 use pathfinding::num_traits::ToPrimitive;
+use std::collections::HashSet;
 
-type Input<'a> = Vec<Game<'a>>;
+type Input<'a> = Vec<Game>;
 
-#[derive(Debug)]
-pub struct Game<'a> {
-    winners: HashSet<&'a str>,
-    numbers: HashSet<&'a str>,
+#[derive(Debug, Copy, Clone)]
+pub struct Game {
+    card: usize,
+    winners: usize,
 }
 
 pub fn generator(input: &str) -> Input {
     input
         .lines()
-        .map(|line| {
+        .enumerate()
+        .map(|(index, line)| {
             let mut split = line.split(':').last().unwrap().split('|');
+            let winners: HashSet<&str> = split.next().unwrap().split_whitespace().collect();
+            let numbers: HashSet<&str> = split.next().unwrap().split_whitespace().collect();
             Game {
-                winners: split.next().unwrap().split_whitespace().collect(),
-                numbers: split.next().unwrap().split_whitespace().collect(),
+                card: index + 1,
+                winners: numbers.intersection(&winners).count(),
             }
         })
         .collect_vec()
@@ -28,12 +30,7 @@ pub fn part1(input: &Input) -> u32 {
     input
         .iter()
         .map(|game| {
-            let winners: u32 = game
-                .numbers
-                .intersection(&game.winners)
-                .count()
-                .to_u32()
-                .unwrap();
+            let winners: u32 = game.winners.to_u32().unwrap();
             if winners > 0 {
                 2_u32.pow(winners - 1)
             } else {
@@ -43,8 +40,24 @@ pub fn part1(input: &Input) -> u32 {
         .sum()
 }
 
-// pub fn part2(input: &Input) -> usize {
-// }
+pub fn part2(input: &Input) -> usize {
+    let mut stack = input.clone();
+    let mut size = &stack.len() - 1;
+    let mut index: usize = 0;
+
+    while index <= size {
+        let game = stack[index];
+        if game.winners > 0 {
+            for copy in game.card..game.card + game.winners {
+                stack.push(input[copy]);
+            }
+            size += game.winners;
+        }
+        index += 1;
+    }
+
+    stack.iter().len()
+}
 
 #[cfg(test)]
 mod tests {
@@ -62,8 +75,8 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
         assert_eq!(part1(&generator(SAMPLE)), 13);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     assert_eq!(part2(&generator(SAMPLE)), 467835);
-    // }
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(&generator(SAMPLE)), 30);
+    }
 }

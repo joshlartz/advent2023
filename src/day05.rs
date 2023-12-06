@@ -24,6 +24,7 @@ pub struct Map {
     source: Range<isize>,
     // source + offset
     destination: isize,
+    length: isize,
 }
 
 pub fn generator(input: &str) -> Input {
@@ -59,9 +60,10 @@ fn parse_map<'a>(input: impl Iterator<Item = &'a str>) -> Vec<Map> {
                 .map(|each| each.parse::<isize>().unwrap())
                 .collect();
             Map {
-                offset: items[0] - items[1], //items[1] - items[0],
+                offset: items[0] - items[1],
                 source: items[1]..items[1] + items[2],
                 destination: items[0],
+                length: items[2],
             }
         })
         .collect()
@@ -77,13 +79,29 @@ pub fn part1(input: &Input) -> isize {
 }
 
 pub fn part2(input: &Input) -> isize {
-    input
+    // search backwards by trying every location starting at 0
+    let seeds = input
         .seeds
         .chunks(2)
-        .flat_map(|chunk| chunk[0]..chunk[0] + chunk[1])
-        .map(|seed| get_location(&seed, &input.maps))
-        .min()
-        .unwrap()
+        .map(|chunk| chunk[0]..chunk[0] + chunk[1])
+        .collect_vec();
+
+    let mut location: isize = 0;
+    loop {
+        let seed = go_backwards(&location, &input.maps);
+        if seeds.iter().any(|range| range.contains(&seed)) {
+            return location;
+        }
+        location += 1;
+    }
+
+    // input
+    //     .seeds
+    //     .chunks(2)
+    //     .flat_map(|chunk| chunk[0]..chunk[0] + chunk[1])
+    //     .map(|seed| get_location(&seed, &input.maps))
+    //     .min()
+    //     .unwrap()
 }
 
 fn get_dest(find_me: isize, map: &[Map]) -> isize {
@@ -109,6 +127,33 @@ fn get_location(seed: &isize, maps: &Maps) -> isize {
         ),
         &maps.h2l,
     )
+}
+
+fn go_backwards(location: &isize, maps: &Maps) -> isize {
+    get_src(
+        get_src(
+            get_src(
+                get_src(
+                    get_src(get_src(get_src(*location, &maps.h2l), &maps.t2h), &maps.l2t),
+                    &maps.w2l,
+                ),
+                &maps.f2w,
+            ),
+            &maps.s2f,
+        ),
+        &maps.s2s,
+    )
+}
+
+fn get_src(find_me: isize, map: &[Map]) -> isize {
+    if let Some(found) = map
+        .iter()
+        .find(|each| (each.destination..each.destination + each.length).contains(&find_me))
+    {
+        find_me - found.offset
+    } else {
+        find_me
+    }
 }
 
 #[cfg(test)]

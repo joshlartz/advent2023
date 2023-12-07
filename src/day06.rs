@@ -15,7 +15,6 @@ pub fn generator(input: &str) -> Input {
             line.split(':')
                 .last()
                 .unwrap()
-                .trim()
                 .split_whitespace()
                 .map(|num| num.parse::<usize>().unwrap())
                 .collect_vec()
@@ -24,11 +23,15 @@ pub fn generator(input: &str) -> Input {
 }
 
 fn flip_arrays(lines: &Input) -> Vec<Race> {
-    (0..lines[0].len())
-        .map(|i| lines.iter().map(|j| j[i]).collect_vec())
+    let mut lines = lines.iter();
+    lines
+        .next()
+        .unwrap()
+        .iter()
+        .zip(lines.next().unwrap().iter())
         .map(|pair| Race {
-            time: pair[0],
-            distance: pair[1],
+            time: *pair.0,
+            distance: *pair.1,
         })
         .collect_vec()
 }

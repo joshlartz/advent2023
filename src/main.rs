@@ -4,6 +4,7 @@ mod day03;
 mod day04;
 mod day05;
 mod day06;
+mod day07;
 
 aoc_main::main! {
   year 2023;
@@ -13,4 +14,5 @@ aoc_main::main! {
   day04 : generator => part1, part2;
   day05 : generator => part1, part2;
   day06 : generator => part1, part2;
+  day07 : generator => part1;
 }

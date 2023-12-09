@@ -20,15 +20,13 @@ pub fn generator(input: &str) -> Input {
         .collect_vec()
 }
 
-pub fn part1(input: &Input) -> usize {
-    let joker = false;
-
+fn main(input: &Input, joker:bool) -> usize {
     input
         .iter()
         .map(|each| Hand {
             hand: each.0,
             bid: each.1,
-            hand_type: hand_type(each.0, false),
+            hand_type: hand_type(each.0, joker),
         })
         .sorted_by(|a, b| {
             if a.hand_type == b.hand_type {
@@ -49,33 +47,12 @@ pub fn part1(input: &Input) -> usize {
         .sum()
 }
 
-pub fn part2(input: &Input) -> usize {
-    let joker = true;
+pub fn part1(input: &Input) -> usize {
+    main(input, false)
+}
 
-    input
-        .iter()
-        .map(|each| Hand {
-            hand: each.0,
-            bid: each.1,
-            hand_type: hand_type(each.0, true),
-        })
-        .sorted_by(|a, b| {
-            if a.hand_type == b.hand_type {
-                for card in 0..5 {
-                    let a_card = card_value(a.hand.chars().nth(card).unwrap(), joker);
-                    let b_card = card_value(b.hand.chars().nth(card).unwrap(), joker);
-                    if a_card != b_card {
-                        return a_card.cmp(&b_card);
-                    }
-                }
-                Ordering::Equal
-            } else {
-                a.hand_type.cmp(&b.hand_type)
-            }
-        })
-        .enumerate()
-        .map(|(i, hand)| hand.bid * (i + 1))
-        .sum()
+pub fn part2(input: &Input) -> usize {
+    main(input, true)
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]

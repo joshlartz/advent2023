@@ -22,7 +22,7 @@ pub fn generator(input: &str) -> Input {
 
     lines.next();
 
-    let re = Regex::new(r"[A-Z]{3}").unwrap();
+    let re = Regex::new(r"[A-Z0-9]{3}").unwrap();
     let mut network: Network = HashMap::new();
     lines.for_each(|line| {
         let mut matches = re.find_iter(line);
@@ -49,9 +49,30 @@ pub fn part1(input: &Input) -> usize {
     count
 }
 
-// pub fn part2(input: &Input) -> usize {
-//     main(input, true)
-// }
+pub fn part2(input: &Input) -> usize {
+    let nodes = input
+        .network
+        .keys()
+        .filter(|each| each.ends_with('A'))
+        .cloned()
+        .collect_vec();
+
+    let counts = nodes
+        .iter()
+        .map(|node| {
+            let mut count = 0;
+            let mut node = node.clone();
+
+            while !node.ends_with('Z') {
+                follow_map(input, &mut count, &mut node);
+            }
+
+            count
+        })
+        .collect_vec();
+
+    lcm(&counts)
+}
 
 fn follow_map(input: &Input, count: &mut usize, node: &mut String) {
     let Input {
@@ -65,11 +86,28 @@ fn follow_map(input: &Input, count: &mut usize, node: &mut String) {
     }
 }
 
+// https://github.com/TheAlgorithms/Rust/blob/master/src/math/lcm_of_n_numbers.rs
+fn lcm(nums: &[usize]) -> usize {
+    if nums.len() == 1 {
+        return nums[0];
+    }
+    let a = nums[0];
+    let b = lcm(&nums[1..]);
+    a * b / gcd_of_two_numbers(a, b)
+}
+
+fn gcd_of_two_numbers(a: usize, b: usize) -> usize {
+    if b == 0 {
+        return a;
+    }
+    gcd_of_two_numbers(b, a % b)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const SAMPLE1: &str = "RL
+    const SAMPLE1A: &str = "RL
 
 AAA = (BBB, CCC)
 BBB = (DDD, EEE)
@@ -79,20 +117,31 @@ EEE = (EEE, EEE)
 GGG = (GGG, GGG)
 ZZZ = (ZZZ, ZZZ)";
 
-    const SAMPLE2: &str = "LLR
+    const SAMPLE1B: &str = "LLR
 
 AAA = (BBB, BBB)
 BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)";
 
+    const SAMPLE2: &str = "LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)";
+
     #[test]
     fn test_part1() {
-        assert_eq!(part1(&generator(SAMPLE1)), 2);
-        assert_eq!(part1(&generator(SAMPLE2)), 6);
+        assert_eq!(part1(&generator(SAMPLE1A)), 2);
+        assert_eq!(part1(&generator(SAMPLE1B)), 6);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     assert_eq!(part2(&generator(SAMPLE)), 5905);
-    // }
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(&generator(SAMPLE2)), 6);
+    }
 }

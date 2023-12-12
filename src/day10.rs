@@ -113,7 +113,6 @@ impl Pipes {
             })
             .collect_vec();
         if neighbors.is_empty() {
-            // print_grid(&self.grid);
             panic!("{:?} had no neighbors", location.coord);
         };
 
@@ -176,14 +175,51 @@ fn pipe_type(char: char) -> Pipe {
 }
 
 pub fn part1(input: &Input) -> usize {
-    let mut pipes = input.pipes.clone();
+    let mut pipes: Pipes = input.pipes.clone();
 
+    visit_loop(&mut pipes, &input.start)
+}
+
+pub fn part2(input: &Input) -> usize {
+    let mut input_grid = input.pipes.grid.to_owned();
+    let mut visited_pipes: Pipes = input.pipes.clone();
+
+    let start_pipe = get_start_pipe(&visited_pipes, &input.start);
+
+    visit_loop(&mut visited_pipes, &input.start);
+
+    // swap start for a real pipe
+    input_grid[(input.start.row, input.start.col)] = start_pipe;
+
+    let mut count = 0;
+
+    for row in 0..input_grid.rows() {
+        let mut inside = false;
+
+        count += input_grid
+            .iter_row(row)
+            .enumerate()
+            .filter(|(col, pipe)| {
+                if should_flip(pipe) && visited_pipes.grid.get(row, *col).unwrap() == &Pipe::Visited
+                {
+                    inside ^= true
+                }
+                inside && visited_pipes.grid.get(row, *col).unwrap() != &Pipe::Visited
+            })
+            .count();
+    }
+
+    count
+}
+
+fn visit_loop(pipes: &mut Pipes, start: &Coord) -> usize {
     let mut count: usize = 1;
     let mut paths = pipes.find_neighbors(&Location {
-        coord: input.start,
+        coord: *start,
         pipe: Pipe::Start,
     });
 
+    pipes.visisted(start);
     paths
         .iter()
         .for_each(|location| pipes.visisted(&location.coord));
@@ -203,10 +239,6 @@ pub fn part1(input: &Input) -> usize {
     count
 }
 
-// pub fn part2(input: &Input) -> usize {
-//
-// }
-
 fn find_start(input: &Grid<Pipe>) -> Coord {
     let mut start: Option<Coord> = None;
     for row in 0..input.size().0 {
@@ -221,6 +253,28 @@ fn find_start(input: &Grid<Pipe>) -> Coord {
     start.unwrap_or_else(|| panic!("no start was found"))
 }
 
+fn get_start_pipe(pipes: &Pipes, start: &Coord) -> Pipe {
+    let binding = pipes.eligible_neighbors(&Pipe::Start);
+    let directions = binding
+        .iter()
+        .filter(|direction| pipes.check_neighbor(start, direction).is_some())
+        .collect_vec();
+
+    match directions[..] {
+        [Direction::Up, Direction::Down] => Pipe::Vertical,
+        [Direction::Left, Direction::Right] => Pipe::Horizontal,
+        [Direction::Up, Direction::Right] => Pipe::NorthEast,
+        [Direction::Up, Direction::Left] => Pipe::NorthWest,
+        [Direction::Down, Direction::Left] => Pipe::SouthWest,
+        [Direction::Down, Direction::Right] => Pipe::SouthEast,
+        _ => panic!("unknown direction combination"),
+    }
+}
+
+fn should_flip(pipe: &Pipe) -> bool {
+    [Pipe::Vertical, Pipe::NorthWest, Pipe::NorthEast].contains(pipe)
+}
+
 #[allow(dead_code)]
 fn reverse_pipe(pipe: &Pipe) -> char {
     match pipe {
@@ -232,7 +286,7 @@ fn reverse_pipe(pipe: &Pipe) -> char {
         Pipe::SouthEast => 'F',
         Pipe::Ground => '.',
         Pipe::Start => 'S',
-        Pipe::Visited => 'x'
+        Pipe::Visited => 'x',
     }
 }
 
@@ -247,26 +301,60 @@ fn print_grid(grid: &Grid<Pipe>) {
 mod tests {
     use super::*;
 
-    const SAMPLE1: &str = ".....
+    const SAMPLE1A: &str = ".....
 .S-7.
 .|.|.
 .L-J.
 .....";
 
-    const SAMPLE2: &str = "..F7.
+    const SAMPLE1B: &str = "..F7.
 .FJ|.
 SJ.L7
 |F--J
 LJ...";
 
+    const SAMPLE2A: &str = "...........
+.S-------7.
+.|F-----7|.
+.||.....||.
+.||.....||.
+.|L-7.F-J|.
+.|..|.|..|.
+.L--J.L--J.
+...........";
+
+    const SAMPLE2B: &str = ".F----7F7F7F7F-7....
+.|F--7||||||||FJ....
+.||.FJ||||||||L7....
+FJL7L7LJLJ||LJ.L-7..
+L--J.L7...LJS7F-7L7.
+....F-J..F7FJ|L7L7L7
+....L7.F7||L7|.L7L7|
+.....|FJLJ|FJ|F7|.LJ
+....FJL-7.||.||||...
+....L---J.LJ.LJLJ...";
+
+    const SAMPLE2C: &str = "FF7FSF7F7F7F7F7F---7
+L|LJ||||||||||||F--J
+FL-7LJLJ||||||LJL-77
+F--JF--7||LJLJ7F7FJ-
+L---JF-JLJ.||-FJLJJ7
+|F|F-JF---7F7-L7L|7|
+|FFJF7L7F-JF7|JL---7
+7-L-JL7||F7|L7F-7F7|
+L.L7LFJ|||||FJL7||LJ
+L7JLJL-JLJLJL--JLJ.L";
+
     #[test]
     fn test_part1() {
-        assert_eq!(part1(&generator(SAMPLE1)), 4);
-        assert_eq!(part1(&generator(SAMPLE2)), 8);
+        assert_eq!(part1(&generator(SAMPLE1A)), 4);
+        assert_eq!(part1(&generator(SAMPLE1B)), 8);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     assert_eq!(part2(&generator(SAMPLE)), 2);
-    // }
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(&generator(SAMPLE2A)), 4);
+        assert_eq!(part2(&generator(SAMPLE2B)), 8);
+        assert_eq!(part2(&generator(SAMPLE2C)), 10);
+    }
 }

@@ -40,9 +40,17 @@ pub fn generator(input: &str) -> Input {
 }
 
 pub fn part1(input: &Input) -> isize {
+    main(input, 1)
+}
+
+pub fn part2(input: &Input) -> isize {
+    main(input, 999_999)
+}
+
+fn main(input: &Input, by: usize) -> isize {
     let mut galaxies = input.galaxies.clone();
 
-    expand_the_universe(&mut galaxies, 1, &input.grid);
+    expand_the_universe(&mut galaxies, by, &input.grid);
 
     let combinations = (0..galaxies.len()).tuple_combinations();
 
@@ -50,10 +58,6 @@ pub fn part1(input: &Input) -> isize {
         .map(|(a, b)| manhattan_distance(&galaxies[a], &galaxies[b]))
         .sum()
 }
-
-// pub fn part2(input: &Input) -> usize {
-
-// }
 
 fn expand_the_universe(galaxies: &mut Vec<Coord>, by: usize, grid: &Grid<char>) {
     let mut empty_rows = grid.iter_rows().enumerate().filter_map(|(i, mut row)| {
@@ -116,8 +120,9 @@ mod tests {
         assert_eq!(part1(&generator(SAMPLE)), 374);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     assert_eq!(part2(&generator(SAMPLE)), 4);
-    // }
+    #[test]
+    fn test_part2() {
+        assert_eq!(main(&generator(SAMPLE), 9), 1030);
+        assert_eq!(main(&generator(SAMPLE), 99), 8410);
+    }
 }

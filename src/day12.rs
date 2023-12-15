@@ -5,7 +5,6 @@ type Input = Vec<Record>;
 
 #[derive(Debug)]
 pub struct Record {
-    // springs: Vec<Spring>,
     springs: String,
     groups: Vec<usize>,
 }
@@ -16,8 +15,6 @@ pub fn generator(input: &str) -> Input {
         .map(|line| {
             let mut parts = line.split_whitespace();
             Record {
-                // springs: parts.next().unwrap().chars().map(spring_type).collect_vec(),
-                // springs: parts.next().unwrap().chars().collect_vec(),
                 springs: parts.next().unwrap().to_string(),
                 groups: parts
                     .next()
@@ -31,71 +28,78 @@ pub fn generator(input: &str) -> Input {
 }
 
 pub fn part1(input: &Input) -> usize {
-    let foo = input[5..]
+    input
         .iter()
         .map(|each| chomp(each.springs.clone(), each.groups.clone()))
-        .collect_vec();
-    println!("{:?}", foo);
-    foo.iter().sum()
+        .sum()
+}
+
+pub fn part2(input: &Input) -> usize {
+    input
+        .iter()
+        .map(unfold)
+        .map(|each| chomp(each.springs.clone(), each.groups.clone()))
+        .sum()
 }
 
 #[memoize]
-fn chomp(input: String, groups: Vec<usize>) -> usize {
+fn chomp(springs: String, groups: Vec<usize>) -> usize {
     let mut arrangements = 0;
 
-    if input.is_empty() {
+    if springs.is_empty() {
         return if groups.is_empty() { 1 } else { 0 };
-    } else if groups.is_empty() {
+    } else if groups.is_empty() && springs.chars().any(|c| c == '#') {
         return 0;
     }
 
-    let first = &input[..1];
+    let first = &springs[..1];
     if first == "." {
-        arrangements += chomp(input[1..].to_string(), groups.clone());
+        arrangements += chomp(springs[1..].to_string(), groups.clone());
     }
     if first == "?" {
-        arrangements += chomp(format!("{}{}", ".", &input[1..]), groups.clone());
-        arrangements += chomp(format!("{}{}", "#", &input[1..]), groups.clone());
+        arrangements += chomp(format!(".{}", &springs[1..]), groups.clone());
+        arrangements += chomp(format!("#{}", &springs[1..]), groups.clone());
     }
     if first == "#" {
         // at least enough springs to satisfy the group
-        if input.len() < groups[0] {
+        if springs.len() < groups[0] {
             return 0;
         }
         // found a complete group
-        if input[..groups[0]].chars().all(|c| c == '#') {
+        if springs[..groups[0]]
+            .chars()
+            .all(|c| ['#', '?'].contains(&c))
+        {
             // check spring after the group
-            if input.len() > groups[0] {
-                let next = &input[groups[0]..groups[0] + 1];
+            if springs.len() > groups[0] {
+                let next = &springs[groups[0]..groups[0] + 1];
                 // too big for the group
                 if next == "#" {
                     return 0;
                 }
                 // the next character needs to be a . for the group to be valid so consume it
-                arrangements += chomp(input[groups[0] + 1..].to_string(), groups[1..].to_vec());
+                arrangements += chomp(springs[groups[0] + 1..].to_string(), groups[1..].to_vec());
             } else {
                 // end of the springs
-                arrangements += chomp(input[groups[0]..].to_string(), groups[1..].to_vec());
+                arrangements += chomp(springs[groups[0]..].to_string(), groups[1..].to_vec());
             }
-        } else {
-            // take one from the group
-            let mut groups = groups.clone();
-            groups[0] -= 1;
-            arrangements += chomp(input[1..].to_string(), groups);
         }
     }
-    if arrangements > 0 {
-        println!(
-            "input: {:?}, groups: {:?}, arrangments: {}",
-            input, groups, arrangements
-        );
-    }
+    // if arrangements > 0 {
+    //     println!(
+    //         "springs: {:?}, groups: {:?}, arrangments: {}",
+    //         springs, groups, arrangements
+    //     );
+    // }
     arrangements
 }
 
-// pub fn part2(input: &Input) -> isize {
-//     main(input, 999_999)
-// }
+fn unfold(record: &Record) -> Record {
+    Record {
+        springs: format!("{}?", record.springs).repeat(5),
+        groups: record.groups.repeat(5),
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -113,9 +117,8 @@ mod tests {
         assert_eq!(part1(&generator(SAMPLE)), 21);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     assert_eq!(main(&generator(SAMPLE), 9), 1030);
-    //     assert_eq!(main(&generator(SAMPLE), 99), 8410);
-    // }
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(&generator(SAMPLE)), 525152);
+    }
 }

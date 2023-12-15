@@ -96,7 +96,7 @@ fn chomp(springs: String, groups: Vec<usize>) -> usize {
 
 fn unfold(record: &Record) -> Record {
     Record {
-        springs: format!("{}?", record.springs).repeat(5),
+        springs: format!("{}?", record.springs).repeat(4) + &record.springs.to_string(),
         groups: record.groups.repeat(5),
     }
 }

@@ -59,21 +59,29 @@ fn main(input: &Input, by: usize) -> isize {
         .sum()
 }
 
-fn expand_the_universe(galaxies: &mut Vec<Coord>, by: usize, grid: &Grid<char>) {
-    let mut empty_rows = grid.iter_rows().enumerate().filter_map(|(i, mut row)| {
-        if row.all(|x| x == &'.') {
-            Some(i)
-        } else {
-            None
-        }
-    }).collect_vec();
-    let mut empty_cols = grid.iter_cols().enumerate().filter_map(|(i, mut col)| {
-        if col.all(|x| x == &'.') {
-            Some(i)
-        } else {
-            None
-        }
-    }).collect_vec();
+fn expand_the_universe(galaxies: &mut [Coord], by: usize, grid: &Grid<char>) {
+    let mut empty_rows = grid
+        .iter_rows()
+        .enumerate()
+        .filter_map(|(i, mut row)| {
+            if row.all(|x| x == &'.') {
+                Some(i)
+            } else {
+                None
+            }
+        })
+        .collect_vec();
+    let mut empty_cols = grid
+        .iter_cols()
+        .enumerate()
+        .filter_map(|(i, mut col)| {
+            if col.all(|x| x == &'.') {
+                Some(i)
+            } else {
+                None
+            }
+        })
+        .collect_vec();
 
     empty_rows.reverse();
     empty_cols.reverse();

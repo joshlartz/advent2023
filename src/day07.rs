@@ -20,7 +20,7 @@ pub fn generator(input: &str) -> Input {
         .collect_vec()
 }
 
-fn main(input: &Input, joker:bool) -> usize {
+fn main(input: &Input, joker: bool) -> usize {
     input
         .iter()
         .map(|each| Hand {
@@ -103,7 +103,13 @@ fn hand_type(hand: &str, joker: bool) -> HandType {
 fn card_value(hand: char, joker: bool) -> u32 {
     hand.to_digit(10).unwrap_or_else(|| match hand {
         'T' => 10,
-        'J' => joker.then_some(1).unwrap_or(11),
+        'J' => {
+            if joker {
+                1
+            } else {
+                11
+            }
+        }
         'Q' => 12,
         'K' => 13,
         'A' => 14,

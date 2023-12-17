@@ -48,8 +48,9 @@ pub fn part2(input: &Input) -> usize {
     while index <= size {
         let game = stack[index];
         if game.winners > 0 {
-            for copy in game.card..game.card + game.winners {
-                stack.push(input[copy]);
+            for item in input.iter().skip(game.card).take(game.winners) {
+                // for copy in game.card..game.card + game.winners {
+                stack.push(*item);
             }
             size += game.winners;
         }

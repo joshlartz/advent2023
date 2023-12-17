@@ -144,10 +144,11 @@ impl Gear {
 pub fn part2(input: &Input) -> usize {
     let (rows, parts) = input;
 
-    let grouped_parts = parts.iter().fold(HashMap::new(), |mut map, part| {
-        map.entry(part.row).or_insert_with(|| Vec::new()).push(part);
-        map
-    });
+    let grouped_parts: HashMap<usize, Vec<&Part>> =
+        parts.iter().fold(HashMap::new(), |mut map, part| {
+            map.entry(part.row).or_default().push(part);
+            map
+        });
 
     let re = Regex::new(r"\*").unwrap();
     let gears = rows
@@ -167,18 +168,13 @@ pub fn part2(input: &Input) -> usize {
             gear.adjacencies()
                 .iter()
                 .filter_map(|adj| {
-                    if let Some(row) = &grouped_parts.get(&adj.row) {
-                        Some(
-                            row.iter()
-                                .filter(|part| {
-                                    (adj.range.start() <= &part.end)
-                                        && &part.start <= adj.range.end()
-                                })
-                                .collect_vec(),
-                        )
-                    } else {
-                        None
-                    }
+                    grouped_parts.get(&adj.row).as_ref().map(|row| {
+                        row.iter()
+                            .filter(|part| {
+                                (adj.range.start() <= &part.end) && &part.start <= adj.range.end()
+                            })
+                            .collect_vec()
+                    })
                 })
                 .flatten()
                 .collect_vec()

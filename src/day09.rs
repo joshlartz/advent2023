@@ -14,25 +14,37 @@ pub fn generator(input: &str) -> Input {
 }
 
 pub fn part1(input: &Input) -> isize {
-    let derivatives = input.iter().map(derivatives).collect_vec();
+    let derivatives = input
+        .iter()
+        .map(|history| derivatives(history))
+        .collect_vec();
     let integrals = derivatives.iter().map(integrals).collect_vec();
 
-    integrals.iter().map(|history| history.last().unwrap().last().unwrap()).sum()
+    integrals
+        .iter()
+        .map(|history| history.last().unwrap().last().unwrap())
+        .sum()
 }
 
 pub fn part2(input: &Input) -> isize {
     let mut input = input.clone();
     for history in input.iter_mut() {
-        history.reverse();   
+        history.reverse();
     }
 
-    let derivatives = input.iter().map(derivatives).collect_vec();
+    let derivatives = input
+        .iter()
+        .map(|history| derivatives(history))
+        .collect_vec();
     let integrals = derivatives.iter().map(integrals).collect_vec();
 
-    integrals.iter().map(|history| history.last().unwrap().last().unwrap()).sum()
+    integrals
+        .iter()
+        .map(|history| history.last().unwrap().last().unwrap())
+        .sum()
 }
 
-fn derivatives(history: &Vec<isize>) -> Input {
+fn derivatives(history: &[isize]) -> Input {
     let mut current: Vec<isize> = history.to_vec();
     let mut derivatives = Vec::from([current.clone()]);
 

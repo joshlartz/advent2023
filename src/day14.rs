@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use itertools::Itertools;
+use std::collections::HashMap;
 
 type Input = Vec<Vec<char>>;
 
@@ -15,7 +15,7 @@ pub fn part1(input: &Input) -> usize {
 }
 
 pub fn part2(input: &Input) -> usize {
-    const MAX:usize  = 1_000_000_000;
+    const MAX: usize = 1_000_000_000;
     let mut grid = input.clone();
 
     let mut unique_cycles: HashMap<String, usize> = HashMap::new();

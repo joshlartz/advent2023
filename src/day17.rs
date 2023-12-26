@@ -42,6 +42,7 @@ enum Direction {
     Down,
     Left,
     Right,
+    Start,
 }
 
 #[derive(Debug, Clone, Eq)]
@@ -76,7 +77,7 @@ impl Map {
         let start = Block {
             coord: Coord { row: 0, col: 0 },
             blocks: 0,
-            direction: Direction::Down,
+            direction: Direction::Start,
         };
         let end = Coord {
             row: input.rows - 1,
@@ -86,9 +87,12 @@ impl Map {
         Self { grid, start, end }
     }
 
-    fn eligible_neighbors(&self, block: &Block) -> Vec<(Block, u32)> {
-        self
-            .grid
+    fn eligible_neighbors(
+        &self,
+        block: &Block,
+        filter_by: fn(&(Block, u32), &Block) -> bool,
+    ) -> Vec<(Block, u32)> {
+        self.grid
             .neighbours((block.coord.row, block.coord.col), false)
             .map(|neighbor| {
                 let direction = block.coord.direction(neighbor);
@@ -111,12 +115,15 @@ impl Map {
                 )
             })
             .filter(|neighbor| {
-                neighbor.0.blocks <= 3
+                filter_by(neighbor, block)
                     && match block.direction {
                         Direction::Down => neighbor.0.direction != Direction::Up,
                         Direction::Up => neighbor.0.direction != Direction::Down,
                         Direction::Left => neighbor.0.direction != Direction::Right,
                         Direction::Right => neighbor.0.direction != Direction::Left,
+                        Direction::Start => {
+                            [Direction::Down, Direction::Right].contains(&neighbor.0.direction)
+                        }
                     }
             })
             .collect()
@@ -142,9 +149,11 @@ pub fn generator(input: &str) -> Input {
 pub fn part1(input: &Input) -> u32 {
     let map = Map::new(input);
 
+    let filter_by = |neighbor: &(Block, u32), _block: &Block| -> bool { neighbor.0.blocks <= 3 };
+
     let path = astar(
         &map.start,
-        |block| map.eligible_neighbors(block),
+        |block| map.eligible_neighbors(block, filter_by),
         |block| map.heuristic(block),
         |block| map.end.eq(&block.coord),
     )
@@ -154,9 +163,34 @@ pub fn part1(input: &Input) -> u32 {
     path.1
 }
 
-// pub fn part2(input: &Input) -> usize {
+pub fn part2(input: &Input) -> u32 {
+    let map = Map::new(input);
 
-// }
+    let filter_by = |neighbor: &(Block, u32), block: &Block| -> bool {
+        if block.direction == Direction::Start {
+            return true;
+        }
+
+        if neighbor.0.blocks > 10 {
+            return false;
+        }
+        if block.blocks < 4 {
+            return block.direction == neighbor.0.direction;
+        }
+        true
+    };
+
+    let path = astar(
+        &map.start,
+        |block| map.eligible_neighbors(block, filter_by),
+        |block| map.heuristic(block),
+        |block| map.end.eq(&block.coord) && block.blocks >= 4,
+    )
+    .unwrap_or_else(|| panic!("no path found"));
+
+    // print_grid(&map.grid, &path.0);
+    path.1
+}
 
 #[allow(dead_code)]
 fn print_grid(matrix: &Input, path: &[Block]) {
@@ -171,6 +205,7 @@ fn print_grid(matrix: &Input, path: &[Block]) {
             Direction::Down => String::from("v"),
             Direction::Left => String::from("<"),
             Direction::Right => String::from(">"),
+            _ => grid[block.coord.row][block.coord.col].clone(),
         }
     });
 
@@ -197,13 +232,20 @@ mod tests {
 2546548887735
 4322674655533";
 
+    const SAMPLE2: &str = "111111111111
+999999999991
+999999999991
+999999999991
+999999999991";
+
     #[test]
     fn test_part1() {
         assert_eq!(part1(&generator(SAMPLE)), 102);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     assert_eq!(part2(&generator(SAMPLE)), 51);
-    // }
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(&generator(SAMPLE)), 94);
+        assert_eq!(part2(&generator(SAMPLE2)), 71);
+    }
 }
